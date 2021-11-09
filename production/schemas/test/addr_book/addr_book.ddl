@@ -50,3 +50,7 @@ table customer (
     name string,
     sales_by_quarter int32[]
 )
+
+table my_table (
+    is_done bool
+)
