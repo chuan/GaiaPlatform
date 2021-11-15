@@ -32,7 +32,7 @@ option(ENABLE_SDK_TESTS "Build and execute ruleset translation tests" ON)
 option(EXPORT_SYMBOLS "Export symbols by default from shared libraries" OFF)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  option(ENABLE_CLANG_TIDY "Enable clang tidy" ON)
+  option(ENABLE_CLANG_TIDY "Enable clang tidy" OFF)
 else()
   option(ENABLE_CLANG_TIDY "Enable clang tidy" OFF)
 endif()

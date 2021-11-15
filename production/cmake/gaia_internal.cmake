@@ -314,7 +314,7 @@ function(add_gaia_sdk_gtest)
   # for intrinsics and stdlib headers, so we need to define them explicitly.
   # Since our internal builds target only Ubuntu 20.04, we assume that the
   # default version (9) of libstdc++ is installed.
-  set(CLANG_INCLUDE_DIR "/usr/include/clang/13/include/")
+  set(CLANG_INCLUDE_DIR "/usr/lib/clang/13.0.0/include/")
   set(LIBCXX_INCLUDE_DIR "/usr/lib/llvm-13/include/c++/v1/")
   set(LIBSTDCXX_INCLUDE_DIR "/usr/include/c++/9/")
 
