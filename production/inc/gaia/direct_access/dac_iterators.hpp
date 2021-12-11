@@ -229,16 +229,16 @@ public:
 
     size_t size() const;
 
-    void insert(gaia::common::gaia_id_t child_id);
-    void insert(const T_child& child_edc);
-    bool connect(gaia::common::gaia_id_t child_id);
-    bool connect(const T_child& child_edc);
+    void insert(gaia::common::gaia_id_t id);
+    void insert(const T_child& child);
+    bool connect(gaia::common::gaia_id_t id);
+    bool connect(const T_child& child);
 
     dac_set_iterator_t<T_child> erase(dac_set_iterator_t<T_child> position);
-    void remove(gaia::common::gaia_id_t child_id);
-    void remove(const T_child& child_edc);
-    bool disconnect(gaia::common::gaia_id_t child_id);
-    bool disconnect(const T_child& child_edc);
+    void remove(gaia::common::gaia_id_t id);
+    void remove(const T_child& child);
+    bool disconnect(gaia::common::gaia_id_t id);
+    bool disconnect(const T_child& child);
     void clear();
 
     reference_anchor_chain_container_t<T_child> where(std::function<bool(const T_child&)>) const;

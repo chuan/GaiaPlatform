@@ -396,56 +396,56 @@ dac_set_iterator_t<T_child> reference_anchor_chain_container_t<T_child>::end() c
 }
 
 template <typename T_child>
-void reference_anchor_chain_container_t<T_child>::insert(gaia::common::gaia_id_t child_id)
+void reference_anchor_chain_container_t<T_child>::insert(gaia::common::gaia_id_t id)
 {
-    connect(child_id);
+    connect(id);
 }
 
 template <typename T_child>
-void reference_anchor_chain_container_t<T_child>::insert(const T_child& child_edc)
+void reference_anchor_chain_container_t<T_child>::insert(const T_child& child)
 {
-    insert(child_edc.gaia_id());
+    insert(child.gaia_id());
 }
 
 template <typename T_child>
-bool reference_anchor_chain_container_t<T_child>::connect(gaia::common::gaia_id_t child_id)
+bool reference_anchor_chain_container_t<T_child>::connect(gaia::common::gaia_id_t id)
 {
     gaia::common::gaia_id_t parent_id = dac_db_t::get_reference(m_anchor_id, gaia::common::c_ref_anchor_parent_offset);
-    if (child_id == gaia::common::c_invalid_gaia_id || parent_id == gaia::common::c_invalid_gaia_id)
+    if (id == gaia::common::c_invalid_gaia_id || parent_id == gaia::common::c_invalid_gaia_id)
     {
-        report_invalid_object_state(parent_id, child_id, T_child::gaia_typename());
+        report_invalid_object_state(parent_id, id, T_child::gaia_typename());
     }
-    return dac_db_t::insert_child_into_anchor_chain(m_anchor_id, child_id, m_anchor_offset);
+    return dac_db_t::insert_child_into_anchor_chain(m_anchor_id, id, m_anchor_offset);
 }
 
 template <typename T_child>
-bool reference_anchor_chain_container_t<T_child>::connect(const T_child& child_edc)
+bool reference_anchor_chain_container_t<T_child>::connect(const T_child& child)
 {
-    return connect(child_edc.gaia_id());
+    return connect(child.gaia_id());
 }
 
 template <typename T_child>
-void reference_anchor_chain_container_t<T_child>::remove(gaia::common::gaia_id_t child_id)
+void reference_anchor_chain_container_t<T_child>::remove(gaia::common::gaia_id_t id)
 {
-    disconnect(child_id);
+    disconnect(id);
 }
 
 template <typename T_child>
-void reference_anchor_chain_container_t<T_child>::remove(const T_child& child_edc)
+void reference_anchor_chain_container_t<T_child>::remove(const T_child& child)
 {
-    remove(child_edc.gaia_id());
+    remove(child.gaia_id());
 }
 
 template <typename T_child>
-bool reference_anchor_chain_container_t<T_child>::disconnect(gaia::common::gaia_id_t child_id)
+bool reference_anchor_chain_container_t<T_child>::disconnect(gaia::common::gaia_id_t id)
 {
-    return dac_db_t::remove_child_from_anchor_chain(m_anchor_id, child_id, m_anchor_offset);
+    return dac_db_t::remove_child_from_anchor_chain(m_anchor_id, id, m_anchor_offset);
 }
 
 template <typename T_child>
-bool reference_anchor_chain_container_t<T_child>::disconnect(const T_child& child_edc)
+bool reference_anchor_chain_container_t<T_child>::disconnect(const T_child& child)
 {
-    return disconnect(child_edc.gaia_id());
+    return disconnect(child.gaia_id());
 }
 
 template <typename T_child>
