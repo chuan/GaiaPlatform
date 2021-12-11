@@ -327,7 +327,7 @@ std::string class_writer_t::generate_list_types()
         {
             if (link.is_value_linked())
             {
-                code += "typedef gaia::direct_access::reference_anchor_chain_container_t<{{CHILD_TABLE}}_t> "
+                code += "typedef gaia::direct_access::value_linked_reference_anchor_chain_container_t<{{CHILD_TABLE}}_t> "
                         "{{FIELD_NAME}}_list_t;";
             }
             else
@@ -554,6 +554,7 @@ std::string class_writer_t::generate_outgoing_links_accessors_cpp()
         code.SetValue("CHILD_TABLE", link.to_table());
         code.SetValue("FIELD_NAME", link.field_name());
         code.SetValue("FIRST_OFFSET", link.first_offset());
+        code.SetValue("PARENT_OFFSET", link.parent_offset());
         code.SetValue("NEXT_OFFSET", link.next_offset());
         code.SetValue("PREV_OFFSET", link.prev_offset());
 
@@ -563,7 +564,7 @@ std::string class_writer_t::generate_outgoing_links_accessors_cpp()
             {
                 code += "{{TABLE_NAME}}_t::{{FIELD_NAME}}_list_t {{TABLE_NAME}}_t::{{FIELD_NAME}}() const {";
                 code.IncrementIdentLevel();
-                code += "return {{TABLE_NAME}}_t::{{FIELD_NAME}}_list_t(this->references()[{{FIRST_OFFSET}}], {{NEXT_OFFSET}}, {{PREV_OFFSET}});";
+                code += "return {{TABLE_NAME}}_t::{{FIELD_NAME}}_list_t(this->references()[{{FIRST_OFFSET}}], {{PARENT_OFFSET}});";
                 code.DecrementIdentLevel();
                 code += "}";
             }

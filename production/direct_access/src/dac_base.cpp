@@ -166,6 +166,16 @@ bool dac_db_t::remove_child_reference(gaia_id_t parent_id, gaia_id_t child_id, c
     return parent.remove_child_reference(child_id, child_slot);
 }
 
+bool dac_db_t::insert_child_into_anchor_chain(gaia_id_t anchor_id, gaia_id_t child_id, common::reference_offset_t anchor_slot)
+{
+    return false;
+}
+
+bool dac_db_t::remove_child_from_anchor_chain(gaia_id_t anchor_id, gaia_id_t child_id, common::reference_offset_t anchor_slot)
+{
+    return false;
+}
+
 //
 // dac_base_t implementation
 //
