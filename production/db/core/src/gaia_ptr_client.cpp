@@ -6,7 +6,6 @@
 #include "gaia/common.hpp"
 
 #include "gaia_internal/common/retail_assert.hpp"
-#include "gaia_internal/common/system_table_types.hpp"
 #include "gaia_internal/db/catalog_core.hpp"
 #include "gaia_internal/db/gaia_ptr.hpp"
 #include "gaia_internal/db/triggers.hpp"
@@ -480,7 +479,7 @@ void gaia_ptr_t::remove(gaia_ptr_t& object)
 
             gaia_id_t referenced_obj_id = other_obj.id();
 
-            if (other_obj.type() == static_cast<gaia_type_t::value_type>(system_table_type_t::catalog_gaia_ref_anchor))
+            if (other_obj.is_ref_anchor())
             {
                 if (other_obj.references()[c_ref_anchor_parent_offset] == object.id())
                 {
@@ -519,7 +518,7 @@ void gaia_ptr_t::remove(gaia_ptr_t& object)
         if (references[i] != c_invalid_gaia_id)
         {
             auto anchor = gaia_ptr_t::from_gaia_id(references[i]);
-            if (anchor.type() != static_cast<gaia_type_t::value_type>(system_table_type_t::catalog_gaia_ref_anchor))
+            if (!anchor.is_ref_anchor())
             {
                 continue;
             }

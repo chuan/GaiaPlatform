@@ -11,6 +11,7 @@
 
 #include "gaia_internal/common/generator_iterator.hpp"
 #include "gaia_internal/common/retail_assert.hpp"
+#include "gaia_internal/common/system_table_types.hpp"
 #include "gaia_internal/db/db_object.hpp"
 #include "gaia_internal/db/db_types.hpp"
 #include "gaia_internal/db/type_metadata.hpp"
@@ -75,6 +76,7 @@ public:
     gaia_ptr_t find_next() const;
 
     inline bool is_null() const;
+    inline bool is_ref_anchor() const;
 
     inline common::gaia_id_t id() const;
     inline common::gaia_type_t type() const;
