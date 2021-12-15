@@ -158,6 +158,12 @@ public:
      */
     bool update_parent_reference(common::gaia_id_t new_parent_id, common::reference_offset_t parent_offset);
 
+    // The following two methods are only allowed on anchor nodes. They will
+    // insert and remove the given node from the reference chain headed by the
+    // current anchor node respectively.
+    bool insert_into_anchor_chain(common::gaia_id_t id, common::reference_offset_t anchor_slot);
+    bool remove_from_anchor_chain(common::gaia_id_t id, common::reference_offset_t anchor_slot);
+
     // Delete the database record at the pointer. This method will not check
     // referential integrity violation for the deletion. Use 'remove()' instead
     // if you want referential integrity to be respected.
@@ -239,6 +245,11 @@ private:
         common::field_position_t field_position);
 
     gaia_ptr_t set_reference(common::reference_offset_t offset, common::gaia_id_t id);
+    gaia_ptr_t set_references(
+        common::reference_offset_t offset1, common::gaia_id_t id1,
+        common::reference_offset_t offset2, common::gaia_id_t id2,
+        common::reference_offset_t offset3 = common::c_invalid_reference_offset,
+        common::gaia_id_t id3 = common::c_invalid_gaia_id);
 
     /**
      * Try to find a record in an indexed table (using the index) that matches
