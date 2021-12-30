@@ -167,24 +167,25 @@ bool dac_db_t::remove_child_reference(gaia_id_t parent_id, gaia_id_t child_id, c
     return parent.remove_child_reference(child_id, child_slot);
 }
 
-bool dac_db_t::insert_into_anchor_chain(gaia_id_t anchor_id, gaia_id_t id, common::reference_offset_t anchor_slot)
+bool dac_db_t::insert_into_anchor_chain(gaia_id_t parent_id, gaia_id_t id, common::reference_offset_t anchor_slot)
 {
-    gaia_ptr_t anchor = gaia_ptr_t::open(anchor_id);
-    if (!anchor.is_ref_anchor())
+    gaia_ptr_t parent = gaia_ptr_t::from_gaia_id(parent_id);
+    if (!parent)
     {
-        throw invalid_object_id_internal(anchor_id);
+        throw invalid_object_id_internal(parent_id);
     }
-    return anchor.insert_into_anchor_chain(id, anchor_slot);
+    return parent.insert_into_anchor_chain(id, anchor_slot);
 }
 
-bool dac_db_t::remove_from_anchor_chain(gaia_id_t anchor_id, gaia_id_t id, common::reference_offset_t anchor_slot)
+bool dac_db_t::remove_from_anchor_chain(gaia_id_t parent_id, gaia_id_t id, common::reference_offset_t anchor_slot)
 {
-    gaia_ptr_t anchor = gaia_ptr_t::open(anchor_id);
-    if (!anchor.is_ref_anchor())
+    gaia_ptr_t parent = gaia_ptr_t::from_gaia_id(parent_id);
+    if (!parent)
     {
-        throw invalid_object_id_internal(anchor_id);
+        throw invalid_object_id_internal(parent_id);
     }
-    return anchor.remove_from_anchor_chain(id, anchor_slot);
+
+    return parent.remove_from_anchor_chain(id, anchor_slot);
 }
 
 //

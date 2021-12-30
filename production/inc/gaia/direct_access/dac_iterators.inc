@@ -357,10 +357,10 @@ size_t reference_chain_container_t<T_child>::size() const
 }
 
 //
-// Implementation for reference_anchor_chain_container_t.
+// Implementation for value_linked_reference_anchor_chain_container_t.
 //
 template <typename T_child>
-dac_set_iterator_t<T_child> reference_anchor_chain_container_t<T_child>::begin() const
+dac_set_iterator_t<T_child> value_linked_reference_anchor_chain_container_t<T_child>::begin() const
 {
     gaia::common::gaia_id_t id = dac_db_t::get_reference(m_anchor_id, gaia::common::c_ref_anchor_first_child_offset);
     gaia::common::reference_offset_t next_offset = m_anchor_offset + 1;
@@ -383,16 +383,70 @@ dac_set_iterator_t<T_child> reference_anchor_chain_container_t<T_child>::begin()
 }
 
 template <typename T_child>
+value_linked_reference_anchor_chain_container_t<T_child>
+value_linked_reference_anchor_chain_container_t<T_child>::where(std::function<bool(const T_child&)> filter_function) const
+{
+    return value_linked_reference_anchor_chain_container_t<T_child>(m_anchor_id, m_anchor_offset, filter_function);
+}
+
+template <typename T_child>
+dac_set_iterator_t<T_child> value_linked_reference_anchor_chain_container_t<T_child>::end() const
+{
+    return dac_set_iterator_t<T_child>(gaia::common::c_invalid_gaia_id, common::c_invalid_reference_offset);
+}
+
+template <typename T_child>
+size_t value_linked_reference_anchor_chain_container_t<T_child>::size() const
+{
+    return std::distance(begin(), end());
+}
+
+//
+// Implementation for reference_anchor_chain_container_t.
+//
+template <typename T_child>
+dac_set_iterator_t<T_child> reference_anchor_chain_container_t<T_child>::begin() const
+{
+    if (m_parent_id == gaia::common::c_invalid_gaia_id)
+    {
+        return end_dac_set_iterator();
+    }
+
+    gaia::common::gaia_id_t anchor_id = dac_db_t::get_reference(m_parent_id, m_child_offset);
+    if (anchor_id == gaia::common::c_invalid_gaia_id)
+    {
+        return end_dac_set_iterator();
+    }
+
+    gaia::common::gaia_id_t id = dac_db_t::get_reference(anchor_id, gaia::common::c_ref_anchor_first_child_offset);
+    if (!m_filter_fn)
+    {
+        return dac_set_iterator_t<T_child>(id, m_next_offset);
+    }
+
+    while (id != gaia::common::c_invalid_gaia_id)
+    {
+        if (m_filter_fn(T_child::get(id)))
+        {
+            break;
+        }
+        id = dac_db_t::get_reference(id, m_next_offset);
+    }
+
+    return dac_set_iterator_t<T_child>(id, m_filter_fn, m_next_offset);
+}
+
+template <typename T_child>
 reference_anchor_chain_container_t<T_child>
 reference_anchor_chain_container_t<T_child>::where(std::function<bool(const T_child&)> filter_function) const
 {
-    return reference_anchor_chain_container_t<T_child>(m_anchor_id, m_anchor_offset, filter_function);
+    return reference_anchor_chain_container_t<T_child>(m_parent_id, filter_function, m_child_offset, m_next_offset);
 }
 
 template <typename T_child>
 dac_set_iterator_t<T_child> reference_anchor_chain_container_t<T_child>::end() const
 {
-    return dac_set_iterator_t<T_child>(gaia::common::c_invalid_gaia_id, common::c_invalid_reference_offset);
+    return end_dac_set_iterator();
 }
 
 template <typename T_child>
@@ -414,7 +468,7 @@ bool reference_anchor_chain_container_t<T_child>::connect(gaia::common::gaia_id_
     {
         report_invalid_object_id(id);
     }
-    return dac_db_t::insert_into_anchor_chain(m_anchor_id, id, m_anchor_offset);
+    return dac_db_t::insert_into_anchor_chain(m_parent_id, id, m_child_offset);
 }
 
 template <typename T_child>
@@ -438,7 +492,7 @@ void reference_anchor_chain_container_t<T_child>::remove(const T_child& child)
 template <typename T_child>
 bool reference_anchor_chain_container_t<T_child>::disconnect(gaia::common::gaia_id_t id)
 {
-    return dac_db_t::remove_from_anchor_chain(m_anchor_id, id, m_anchor_offset);
+    return dac_db_t::remove_from_anchor_chain(m_parent_id, id, m_child_offset);
 }
 
 template <typename T_child>

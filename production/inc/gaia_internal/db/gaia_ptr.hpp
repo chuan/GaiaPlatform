@@ -158,9 +158,6 @@ public:
      */
     bool update_parent_reference(common::gaia_id_t new_parent_id, common::reference_offset_t parent_offset);
 
-    // The following two methods are only allowed on anchor nodes. They will
-    // insert and remove the given node from the reference chain headed by the
-    // current anchor node respectively.
     bool insert_into_anchor_chain(common::gaia_id_t id, common::reference_offset_t anchor_slot);
     bool remove_from_anchor_chain(common::gaia_id_t id, common::reference_offset_t anchor_slot);
 

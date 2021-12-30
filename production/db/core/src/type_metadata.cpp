@@ -67,20 +67,7 @@ void type_metadata_t::add_child_relationship(const std::shared_ptr<relationship_
     std::unique_lock lock(m_metadata_lock);
 
     m_child_relationships.insert({relationship->parent_offset, relationship});
-
-    // A child node contains 2 ref slots for every relationship.
-    constexpr std::size_t c_num_ref_slots = 2;
-    // A child node contains 3 ref slots for every value linked relationship.
-    constexpr std::size_t c_value_linked_rel_num_ref_slots = 3;
-
-    if (relationship->value_linked)
-    {
-        m_reference_count += c_value_linked_rel_num_ref_slots;
-    }
-    else
-    {
-        m_reference_count += c_num_ref_slots;
-    }
+    m_reference_count += 3;
 }
 
 gaia_type_t type_metadata_t::get_type() const
@@ -127,7 +114,7 @@ void type_registry_t::init()
         .child_type = table,
         .first_child_offset = catalog_core_t::c_gaia_database_first_gaia_table_offset,
         .next_child_offset = catalog_core_t::c_gaia_table_next_gaia_table_offset,
-        .prev_child_offset = c_invalid_reference_offset,
+        .prev_child_offset = catalog_core_t::c_gaia_table_prev_gaia_table_offset,
         .parent_offset = catalog_core_t::c_gaia_table_parent_gaia_database_offset,
         .cardinality = cardinality_t::many,
         .parent_required = false,
@@ -138,7 +125,7 @@ void type_registry_t::init()
         .child_type = field,
         .first_child_offset = catalog_core_t::c_gaia_table_first_gaia_field_offset,
         .next_child_offset = catalog_core_t::c_gaia_field_next_gaia_field_offset,
-        .prev_child_offset = c_invalid_reference_offset,
+        .prev_child_offset = catalog_core_t::c_gaia_field_prev_gaia_field_offset,
         .parent_offset = catalog_core_t::c_gaia_field_parent_gaia_table_offset,
         .cardinality = cardinality_t::many,
         .parent_required = false,
@@ -149,7 +136,7 @@ void type_registry_t::init()
         .child_type = relationship,
         .first_child_offset = catalog_core_t::c_gaia_table_first_parent_gaia_relationship_offset,
         .next_child_offset = catalog_core_t::c_gaia_relationship_next_parent_gaia_relationship_offset,
-        .prev_child_offset = c_invalid_reference_offset,
+        .prev_child_offset = catalog_core_t::c_gaia_relationship_prev_parent_gaia_relationship_offset,
         .parent_offset = catalog_core_t::c_gaia_relationship_parent_parent_gaia_table_offset,
         .cardinality = cardinality_t::many,
         .parent_required = false,
@@ -160,7 +147,7 @@ void type_registry_t::init()
         .child_type = relationship,
         .first_child_offset = catalog_core_t::c_gaia_table_first_child_gaia_relationship_offset,
         .next_child_offset = catalog_core_t::c_gaia_relationship_next_child_gaia_relationship_offset,
-        .prev_child_offset = c_invalid_reference_offset,
+        .prev_child_offset = catalog_core_t::c_gaia_relationship_prev_child_gaia_relationship_offset,
         .parent_offset = catalog_core_t::c_gaia_relationship_parent_child_gaia_table_offset,
         .cardinality = cardinality_t::many,
         .parent_required = false,
@@ -171,7 +158,7 @@ void type_registry_t::init()
         .child_type = rule,
         .first_child_offset = catalog_core_t::c_gaia_ruleset_first_gaia_rule_offset,
         .next_child_offset = catalog_core_t::c_gaia_rule_next_gaia_rule_offset,
-        .prev_child_offset = c_invalid_reference_offset,
+        .prev_child_offset = catalog_core_t::c_gaia_rule_prev_gaia_rule_offset,
         .parent_offset = catalog_core_t::c_gaia_rule_parent_gaia_ruleset_offset,
         .cardinality = cardinality_t::many,
         .parent_required = false,
@@ -182,7 +169,7 @@ void type_registry_t::init()
         .child_type = index,
         .first_child_offset = catalog_core_t::c_gaia_table_first_gaia_index_offset,
         .next_child_offset = catalog_core_t::c_gaia_index_next_gaia_index_offset,
-        .prev_child_offset = c_invalid_reference_offset,
+        .prev_child_offset = catalog_core_t::c_gaia_index_prev_gaia_index_offset,
         .parent_offset = catalog_core_t::c_gaia_index_parent_gaia_table_offset,
         .cardinality = cardinality_t::many,
         .parent_required = false,

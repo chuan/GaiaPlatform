@@ -7,6 +7,7 @@
 
 #include <utility>
 
+#include "gaia/common.hpp"
 #include "gaia/direct_access/dac_base.hpp"
 #include "gaia/exceptions.hpp"
 
@@ -192,34 +193,62 @@ private:
     common::reference_offset_t m_next_offset;
 };
 
-// The reference chain container used in value-linked relationships. It differs
-// from the reference chain container above in the following ways:
-//
-// - The front of the child list is an anchor node that points to the parent node.
-//
-// - Each child node has a link to the anchor node instead of the parent node.
-//
-// - Each child node has a back link to the previous node.
-//
-// - No manual connection methods like 'connect()' or 'disconnect()'.
-//
+template <typename T_child>
+class value_linked_reference_anchor_chain_container_t : protected dac_db_t
+{
+public:
+    explicit value_linked_reference_anchor_chain_container_t(
+        gaia::common::gaia_id_t anchor_id,
+        common::reference_offset_t anchor_offset,
+        std::function<bool(const T_child&)> filter_function)
+        : m_anchor_id(anchor_id), m_anchor_offset(anchor_offset), m_filter_fn(filter_function)
+    {
+    }
+
+    explicit value_linked_reference_anchor_chain_container_t(
+        gaia::common::gaia_id_t anchor_id,
+        common::reference_offset_t anchor_offset)
+        : m_anchor_id(anchor_id), m_anchor_offset(anchor_offset)
+    {
+    }
+
+    value_linked_reference_anchor_chain_container_t(const value_linked_reference_anchor_chain_container_t&) = default;
+    value_linked_reference_anchor_chain_container_t& operator=(const value_linked_reference_anchor_chain_container_t&) = default;
+
+    dac_set_iterator_t<T_child> begin() const;
+    dac_set_iterator_t<T_child> end() const;
+
+    size_t size() const;
+
+    value_linked_reference_anchor_chain_container_t<T_child> where(std::function<bool(const T_child&)> filter_function) const;
+
+private:
+    gaia::common::gaia_id_t m_anchor_id{gaia::common::c_invalid_gaia_id};
+    common::reference_offset_t m_anchor_offset;
+    std::function<bool(const T_child&)> m_filter_fn{};
+};
+
 template <typename T_child>
 class reference_anchor_chain_container_t : protected dac_db_t
 {
 public:
     explicit reference_anchor_chain_container_t(
-        gaia::common::gaia_id_t anchor,
-        common::reference_offset_t anchor_offset,
-        std::function<bool(const T_child&)> filter_function)
-        : m_anchor_id(anchor)
-        , m_anchor_offset(anchor_offset)
-        , m_filter_fn(filter_function){};
+        gaia::common::gaia_id_t parent,
+        std::function<bool(const T_child&)> filter_function,
+        common::reference_offset_t child_offset,
+        common::reference_offset_t next_offset)
+        : m_parent_id(parent)
+        , m_filter_fn(filter_function)
+        , m_child_offset(child_offset)
+        , m_next_offset(next_offset){};
 
     explicit reference_anchor_chain_container_t(
-        gaia::common::gaia_id_t anchor,
-        common::reference_offset_t anchor_offset)
-        : m_anchor_id(anchor)
-        , m_anchor_offset(anchor_offset){};
+        gaia::common::gaia_id_t parent,
+        common::reference_offset_t child_offset,
+        common::reference_offset_t next_offset)
+        : m_parent_id(parent)
+        , m_child_offset(child_offset)
+        , m_next_offset(next_offset){};
 
     reference_anchor_chain_container_t(const reference_anchor_chain_container_t&) = default;
     reference_anchor_chain_container_t& operator=(const reference_anchor_chain_container_t&) = default;
@@ -229,78 +258,30 @@ public:
 
     size_t size() const;
 
-    void insert(gaia::common::gaia_id_t id);
-    void insert(const T_child& child);
-    bool connect(gaia::common::gaia_id_t id);
-    bool connect(const T_child& child);
+    void insert(gaia::common::gaia_id_t child_id);
+    void insert(const T_child& child_edc);
+    bool connect(gaia::common::gaia_id_t child_id);
+    bool connect(const T_child& child_edc);
 
     dac_set_iterator_t<T_child> erase(dac_set_iterator_t<T_child> position);
-    void remove(gaia::common::gaia_id_t id);
-    void remove(const T_child& child);
-    bool disconnect(gaia::common::gaia_id_t id);
-    bool disconnect(const T_child& child);
+    void remove(gaia::common::gaia_id_t child_id);
+    void remove(const T_child& child_edc);
+    bool disconnect(gaia::common::gaia_id_t child_id);
+    bool disconnect(const T_child& child_edc);
     void clear();
 
     reference_anchor_chain_container_t<T_child> where(std::function<bool(const T_child&)>) const;
 
 private:
-    gaia::common::gaia_id_t m_anchor_id{gaia::common::c_invalid_gaia_id};
-    common::reference_offset_t m_anchor_offset;
+    gaia::common::gaia_id_t m_parent_id{gaia::common::c_invalid_gaia_id};
     std::function<bool(const T_child&)> m_filter_fn{};
-};
+    common::reference_offset_t m_child_offset;
+    common::reference_offset_t m_next_offset;
 
-// The value-linked reference anchor chain container is the same as the
-// reference anchor chain container except users cannot connect or disconnect
-// objects in the chain manually. We use a proxy class to the reference chain
-// instead of inheriting from it because the two types are not interchangable,
-// i.e. we do not want users to cast one to antoher.
-template <typename T_child>
-class value_linked_reference_anchor_chain_container_t : protected dac_db_t
-{
-public:
-    explicit value_linked_reference_anchor_chain_container_t(
-        gaia::common::gaia_id_t anchor,
-        common::reference_offset_t anchor_offset,
-        std::function<bool(const T_child&)> filter_function)
-        : m_ref_anchor_chain(anchor, anchor_offset, filter_function)
+    inline dac_set_iterator_t<T_child> end_dac_set_iterator() const
     {
+        return dac_set_iterator_t<T_child>(gaia::common::c_invalid_gaia_id, common::c_invalid_reference_offset);
     }
-
-    explicit value_linked_reference_anchor_chain_container_t(
-        gaia::common::gaia_id_t anchor,
-        common::reference_offset_t anchor_offset)
-        : m_ref_anchor_chain(anchor, anchor_offset)
-    {
-    }
-
-    value_linked_reference_anchor_chain_container_t(const value_linked_reference_anchor_chain_container_t&) = default;
-    value_linked_reference_anchor_chain_container_t& operator=(const value_linked_reference_anchor_chain_container_t&) = default;
-
-    dac_set_iterator_t<T_child> begin() const
-    {
-        return m_ref_anchor_chain.begin();
-    }
-    dac_set_iterator_t<T_child> end() const
-    {
-        return m_ref_anchor_chain.end();
-    }
-
-    size_t size() const
-    {
-        return m_ref_anchor_chain.size();
-    }
-
-    value_linked_reference_anchor_chain_container_t<T_child> where(std::function<bool(const T_child&)> filter_function) const
-    {
-        return value_linked_reference_anchor_chain_container_t(m_ref_anchor_chain.where(filter_function));
-    }
-
-private:
-    explicit value_linked_reference_anchor_chain_container_t(const reference_anchor_chain_container_t<T_child>& ref_anchor_chain)
-        : m_ref_anchor_chain{ref_anchor_chain}
-    {
-    }
-    reference_anchor_chain_container_t<T_child> m_ref_anchor_chain;
 };
 
 // Pick up our template implementation. These still need to be in the header so

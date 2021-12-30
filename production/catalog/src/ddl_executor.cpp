@@ -439,9 +439,10 @@ gaia_id_t ddl_executor_t::create_relationship(
     reference_offset_t first_child_offset = parent_available_offset;
 
     reference_offset_t parent_offset = child_available_offset;
-    reference_offset_t next_child_offset = child_available_offset + 1;
+    reference_offset_t next_child_offset = parent_offset + 1;
     validate_new_reference_offset(next_child_offset);
-    reference_offset_t prev_child_offset = c_invalid_reference_offset;
+    reference_offset_t prev_child_offset = next_child_offset + 1;
+    validate_new_reference_offset(prev_child_offset);
 
     bool is_parent_required = false;
     bool is_deprecated = false;
@@ -548,9 +549,6 @@ gaia_id_t ddl_executor_t::create_relationship(
         {
             child_field_positions.push_back(gaia_field_t::get(field_id).position());
         }
-
-        prev_child_offset = next_child_offset + 1;
-        validate_new_reference_offset(prev_child_offset);
     }
 
     // These casts works because a field_position_t is a thin wrapper over uint16_t,
@@ -804,7 +802,7 @@ reference_offset_t ddl_executor_t::find_child_available_offset(const gaia_table_
     {
         max_offset = std::max(
             {max_offset.value(),
-             relationship.prev_child_offset() == c_invalid_reference_offset ? relationship.next_child_offset() : relationship.prev_child_offset(),
+             relationship.prev_child_offset(),
              relationship.parent_offset()});
 
         ASSERT_INVARIANT(max_offset != c_invalid_reference_offset, "Invalid reference offset detected!");
