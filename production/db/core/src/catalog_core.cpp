@@ -10,6 +10,7 @@
 #include "gaia/common.hpp"
 
 #include "gaia_internal/common/generator_iterator.hpp"
+#include "gaia_internal/common/retail_assert.hpp"
 #include "gaia_internal/common/system_table_types.hpp"
 
 #include "db_object_helpers.hpp"
@@ -98,12 +99,24 @@ namespace db
 
 [[nodiscard]] gaia_id_t relationship_view_t::parent_table_id() const
 {
-    return m_obj_ptr->references()[c_parent_gaia_table_ref_offset];
+    gaia_id_t anchor_id = m_obj_ptr->references()[c_parent_gaia_table_ref_offset];
+    // This can only happen if we have a broken relationship record in catalog.
+    ASSERT_PRECONDITION(
+        anchor_id != c_invalid_gaia_id,
+        std::string("Unexpected invalid anchor in the relationship ") + name() + " to get the parent table.");
+    auto anchor_ptr = id_to_ptr(anchor_id);
+    return anchor_ptr->references()[c_ref_anchor_parent_offset];
 }
 
 [[nodiscard]] gaia_id_t relationship_view_t::child_table_id() const
 {
-    return m_obj_ptr->references()[c_child_gaia_table_ref_offset];
+    gaia_id_t anchor_id = m_obj_ptr->references()[c_child_gaia_table_ref_offset];
+    // This can only happen if we have a broken relationship record in catalog.
+    ASSERT_PRECONDITION(
+        anchor_id != c_invalid_gaia_id,
+        std::string("Unexpected invalid anchor in the relationship ") + name() + "to get the child table.");
+    auto anchor_ptr = id_to_ptr(anchor_id);
+    return anchor_ptr->references()[c_ref_anchor_parent_offset];
 }
 
 [[nodiscard]] const flatbuffers::Vector<uint16_t>* relationship_view_t::parent_field_positions() const
@@ -188,8 +201,14 @@ generator_range_t<T_catalog_obj_view>
 list_catalog_obj_reference_chain(gaia_id_t table_id, uint16_t first_offset, uint16_t next_offset)
 {
     auto obj_ptr = id_to_ptr(table_id);
-    const gaia_id_t* references = obj_ptr->references();
-    gaia_id_t first_obj_id = references[first_offset];
+    gaia_id_t anchor_id = obj_ptr->references()[first_offset];
+    if (anchor_id == c_invalid_gaia_id)
+    {
+        return generator_range_t<T_catalog_obj_view>();
+    }
+    auto anchor_ptr = id_to_ptr(anchor_id);
+    gaia_id_t first_obj_id = anchor_ptr->references()[c_ref_anchor_first_child_offset];
+
     auto generator = [id = first_obj_id, next_offset]() mutable -> std::optional<T_catalog_obj_view>
     {
         if (id == c_invalid_gaia_id)

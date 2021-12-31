@@ -585,7 +585,7 @@ void ddl_executor_t::drop_relationship_no_ri(gaia_relationship_t& relationship)
     // this by disconnecting all child records from their parent.
     for (auto record : gaia_ptr_t::find_all_range(relationship.child().type()))
     {
-        record.remove_parent_reference(relationship.parent_offset());
+        record.remove_from_anchor_chain(relationship.parent_offset());
     }
 
     // Unlink parent.

@@ -160,6 +160,7 @@ public:
 
     bool insert_into_anchor_chain(common::gaia_id_t id, common::reference_offset_t anchor_slot);
     bool remove_from_anchor_chain(common::gaia_id_t id, common::reference_offset_t anchor_slot);
+    bool remove_from_anchor_chain(common::reference_offset_t anchor_slot);
 
     // Delete the database record at the pointer. This method will not check
     // referential integrity violation for the deletion. Use 'remove()' instead
