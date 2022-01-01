@@ -70,6 +70,7 @@ TEST_F(gaia_db_references_test, add_child_reference__one_to_one)
     gaia_ptr_t anchor = gaia_ptr_t::from_gaia_id(parent.references()[c_first_patient_offset]);
 
     ASSERT_EQ(anchor.references()[c_ref_anchor_first_child_offset], child.id());
+    ASSERT_EQ(anchor.references()[c_ref_anchor_parent_offset], parent.id());
     ASSERT_EQ(child.references()[c_parent_doctor_offset], anchor.id());
     ASSERT_EQ(child.references()[c_next_patient_offset], c_invalid_gaia_id);
     ASSERT_EQ(child.references()[c_prev_patient_offset], c_invalid_gaia_id);
@@ -96,6 +97,7 @@ TEST_F(gaia_db_references_test, add_child_reference__one_to_many)
     gaia_ptr_t anchor = gaia_ptr_t::from_gaia_id(parent.references()[c_first_patient_offset]);
 
     ASSERT_EQ(anchor.references()[c_ref_anchor_first_child_offset], child2.id());
+    ASSERT_EQ(anchor.references()[c_ref_anchor_parent_offset], parent.id());
     ASSERT_EQ(child.references()[c_parent_doctor_offset], anchor.id());
     ASSERT_EQ(child.references()[c_next_patient_offset], c_invalid_gaia_id);
     ASSERT_EQ(child.references()[c_prev_patient_offset], child2.id());
@@ -387,6 +389,7 @@ TEST_F(gaia_db_references_test, remove_child_reference__different_child)
 
     gaia_ptr_t anchor = gaia_ptr_t::from_gaia_id(parent.references()[c_first_patient_offset]);
     ASSERT_EQ(anchor.references()[c_ref_anchor_first_child_offset], child.id());
+    ASSERT_EQ(anchor.references()[c_ref_anchor_parent_offset], parent.id());
     ASSERT_EQ(child.references()[c_parent_doctor_offset], anchor.id());
     ASSERT_EQ(child.references()[c_next_patient_offset], c_invalid_gaia_id);
     ASSERT_EQ(child.references()[c_prev_patient_offset], c_invalid_gaia_id);
@@ -416,6 +419,7 @@ TEST_F(gaia_db_references_test, remove_child_reference__different_parent)
 
     gaia_ptr_t anchor = gaia_ptr_t::from_gaia_id(parent.references()[c_first_patient_offset]);
     ASSERT_EQ(anchor.references()[c_ref_anchor_first_child_offset], child.id());
+    ASSERT_EQ(anchor.references()[c_ref_anchor_parent_offset], parent.id());
     ASSERT_EQ(child.references()[c_parent_doctor_offset], anchor.id());
     ASSERT_EQ(child.references()[c_next_patient_offset], c_invalid_gaia_id);
     ASSERT_EQ(child.references()[c_prev_patient_offset], c_invalid_gaia_id);
@@ -510,5 +514,129 @@ TEST_F(gaia_db_references_test, remove_child_reference__invalid_relation_type_ch
         parent.remove_from_anchor_chain(clinic.id(), c_first_patient_offset),
         invalid_relationship_type);
 
+    commit_transaction();
+}
+
+TEST_F(gaia_db_references_test, remove_parent_reference__one_to_one)
+{
+    begin_transaction();
+
+    // GIVEN
+
+    relationship_builder_t::one_to_one()
+        .parent(doctor_type)
+        .child(patient_type)
+        .create_relationship();
+
+    gaia_ptr_t parent = create_object(doctor_type, "Dr. House");
+    gaia_ptr_t child = create_object(patient_type, "John Doe");
+
+    parent.insert_into_anchor_chain(child.id(), c_first_patient_offset);
+
+    // WHEN
+
+    child.remove_from_anchor_chain(c_parent_doctor_offset);
+
+    // THEN
+
+    ASSERT_EQ(parent.references()[c_first_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(child.references()[c_parent_doctor_offset], c_invalid_gaia_id);
+    ASSERT_EQ(child.references()[c_next_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(child.references()[c_prev_patient_offset], c_invalid_gaia_id);
+
+    commit_transaction();
+}
+
+TEST_F(gaia_db_references_test, update_parent_reference__parent_exists)
+{
+    begin_transaction();
+
+    relationship_builder_t::one_to_one()
+        .parent(doctor_type)
+        .child(patient_type)
+        .create_relationship();
+
+    gaia_ptr_t parent = create_object(doctor_type, "Dr. House");
+    gaia_ptr_t child = create_object(patient_type, "John Doe");
+
+    parent.insert_into_anchor_chain(child.id(), c_first_patient_offset);
+
+    gaia_ptr_t new_parent = create_object(doctor_type, "Dr. Cox");
+    child.update_parent_reference(new_parent.id(), c_parent_doctor_offset);
+
+    ASSERT_EQ(parent.references()[c_first_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(child.references()[c_next_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(child.references()[c_prev_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(new_parent.references()[c_first_patient_offset], child.references()[c_parent_doctor_offset]);
+
+    gaia_ptr_t anchor = gaia_ptr_t::from_gaia_id(new_parent.references()[c_first_patient_offset]);
+    ASSERT_EQ(anchor.references()[c_ref_anchor_first_child_offset], child.id());
+    ASSERT_EQ(anchor.references()[c_ref_anchor_parent_offset], new_parent.id());
+
+    commit_transaction();
+}
+
+TEST_F(gaia_db_references_test, update_parent_reference__parent_not_exists)
+{
+    begin_transaction();
+
+    relationship_builder_t::one_to_one()
+        .parent(doctor_type)
+        .child(patient_type)
+        .create_relationship();
+
+    gaia_ptr_t child = create_object(patient_type, "John Doe");
+
+    gaia_ptr_t new_parent = create_object(doctor_type, "JD");
+    child.update_parent_reference(new_parent.id(), c_parent_doctor_offset);
+
+    ASSERT_EQ(child.references()[c_next_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(child.references()[c_prev_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(new_parent.references()[c_first_patient_offset], child.references()[c_parent_doctor_offset]);
+
+    gaia_ptr_t anchor = gaia_ptr_t::from_gaia_id(new_parent.references()[c_first_patient_offset]);
+    ASSERT_EQ(anchor.references()[c_ref_anchor_first_child_offset], child.id());
+    ASSERT_EQ(anchor.references()[c_ref_anchor_parent_offset], new_parent.id());
+
+    commit_transaction();
+}
+
+TEST_F(gaia_db_references_test, update_parent_reference__single_cardinality_violation)
+{
+    begin_transaction();
+
+    relationship_builder_t::one_to_one()
+        .parent(doctor_type)
+        .child(patient_type)
+        .create_relationship();
+
+    gaia_ptr_t parent = create_object(doctor_type, "Dr. House");
+    gaia_ptr_t child = create_object(patient_type, "John Doe");
+
+    parent.insert_into_anchor_chain(child.id(), c_first_patient_offset);
+
+    gaia_ptr_t new_parent = create_object(doctor_type, "Dr. Cox");
+    gaia_ptr_t new_child = create_object(patient_type, "Jane Doe");
+
+    new_parent.insert_into_anchor_chain(new_child.id(), c_first_patient_offset);
+
+    EXPECT_THROW(
+        child.update_parent_reference(new_parent.id(), c_parent_doctor_offset),
+        single_cardinality_violation);
+
+    ASSERT_EQ(child.references()[c_next_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(child.references()[c_prev_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(new_child.references()[c_next_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(new_child.references()[c_prev_patient_offset], c_invalid_gaia_id);
+    ASSERT_EQ(parent.references()[c_first_patient_offset], child.references()[c_parent_doctor_offset]);
+    ASSERT_EQ(new_parent.references()[c_first_patient_offset], new_child.references()[c_parent_doctor_offset]);
+
+    gaia_ptr_t anchor = gaia_ptr_t::from_gaia_id(parent.references()[c_first_patient_offset]);
+    ASSERT_EQ(anchor.references()[c_ref_anchor_first_child_offset], child.id());
+    ASSERT_EQ(anchor.references()[c_ref_anchor_parent_offset], parent.id());
+
+    gaia_ptr_t new_anchor = gaia_ptr_t::from_gaia_id(new_parent.references()[c_first_patient_offset]);
+    ASSERT_EQ(new_anchor.references()[c_ref_anchor_first_child_offset], new_child.id());
+    ASSERT_EQ(new_anchor.references()[c_ref_anchor_parent_offset], new_parent.id());
     commit_transaction();
 }

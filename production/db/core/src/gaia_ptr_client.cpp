@@ -470,6 +470,48 @@ bool gaia_ptr_t::remove_from_anchor_chain(reference_offset_t child_anchor_slot)
     return true;
 }
 
+bool gaia_ptr_t::update_parent_reference(common::gaia_id_t new_parent_id, common::reference_offset_t parent_offset)
+{
+    const type_metadata_t& child_metadata = type_registry_t::instance().get(type());
+    std::optional<relationship_t> relationship = child_metadata.find_child_relationship(parent_offset);
+
+    if (!relationship)
+    {
+        throw invalid_reference_offset_internal(type(), parent_offset);
+    }
+
+    auto new_parent = gaia_ptr_t::from_gaia_id(new_parent_id);
+
+    if (!new_parent)
+    {
+        throw invalid_object_id_internal(new_parent_id);
+    }
+
+    // TODO: this implementation will produce more garbage than necessary. Also, many of the RI methods
+    //  perform redundant checks. Created JIRA to improve RI performance/api:
+    //  https://gaiaplatform.atlassian.net/browse/GAIAPLAT-435
+
+    // Check cardinality.
+    if (new_parent.references()[relationship->first_child_offset] != c_invalid_gaia_id)
+    {
+        // This parent already has a child for this relationship.
+        // If the relationship is one-to-one we fail.
+        if (relationship->cardinality == cardinality_t::one)
+        {
+            throw single_cardinality_violation_internal(new_parent.type(), relationship->first_child_offset);
+        }
+    }
+
+    if (references()[parent_offset] != c_invalid_gaia_id)
+    {
+        auto anchor = gaia_ptr_t::from_gaia_id(references()[parent_offset]);
+        auto old_parent = gaia_ptr_t::from_gaia_id(anchor.references()[c_ref_anchor_parent_offset]);
+        old_parent.remove_from_anchor_chain(id(), relationship->first_child_offset);
+    }
+
+    return new_parent.insert_into_anchor_chain(id(), relationship->first_child_offset);
+}
+
 void gaia_ptr_t::auto_connect(
     gaia_id_t id,
     gaia_type_t type,

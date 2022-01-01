@@ -104,6 +104,8 @@ public:
     bool remove_from_anchor_chain(common::gaia_id_t id, common::reference_offset_t anchor_slot);
     bool remove_from_anchor_chain(common::reference_offset_t anchor_slot);
 
+    bool update_parent_reference(common::gaia_id_t new_parent_id, common::reference_offset_t parent_offset);
+
     // Delete the database record at the pointer. This method will not check
     // referential integrity violation for the deletion. Use 'remove()' instead
     // if you want referential integrity to be respected.

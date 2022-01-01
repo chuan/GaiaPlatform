@@ -7,6 +7,8 @@
 
 #include <sstream>
 
+#include "gaia/common.hpp"
+
 #include "gaia_internal/catalog/catalog.hpp"
 #include "gaia_internal/catalog/gaia_catalog.h"
 #include "gaia_internal/common/logger.hpp"
@@ -718,13 +720,22 @@ NullableDatum scan_state_t::extract_field_value(size_t field_index)
                          reference_offset, get_table_name())));
             }
 
-            gaia_id_t reference_id = m_current_record.references()[reference_offset];
-            field_value.value = UInt64GetDatum(reference_id);
-
-            // If the reference id is invalid, surface the value as NULL.
-            if (reference_id == c_invalid_gaia_id)
+            gaia_id_t anchor_id = m_current_record.references()[reference_offset];
+            if (anchor_id == c_invalid_gaia_id)
             {
+                field_value.value = UInt64GetDatum(c_invalid_gaia_id);
                 field_value.isnull = true;
+            }
+            else
+            {
+                gaia_id_t reference_id = gaia_ptr_t::from_gaia_id(anchor_id).references()[c_ref_anchor_parent_offset];
+                field_value.value = UInt64GetDatum(reference_id);
+
+                // If the reference id is invalid, surface the value as NULL.
+                if (reference_id == c_invalid_gaia_id)
+                {
+                    field_value.isnull = true;
+                }
             }
         }
         else if (m_fields[field_index].repeated_count != 1)
@@ -1077,7 +1088,7 @@ bool modify_state_t::modify_record(uint64_t gaia_id, modify_operation_type_t mod
                 }
 
                 // If the existing reference was valid, we need to remove it.
-                record.remove_parent_reference(reference_offset);
+                record.remove_from_anchor_chain(reference_offset);
             }
             else
             {

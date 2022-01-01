@@ -666,10 +666,7 @@ TEST_F(recovery_test, reference_update_test_new)
 
         // Get the child
         gaia_ptr_t child = gaia_ptr_t::from_gaia_id(child_id);
-        gaia_ptr_t old_parent = gaia_ptr_t::from_gaia_id(parent_id);
-
-        old_parent.remove_from_anchor_chain(child.id(), c_first_patient_offset);
-        new_parent.insert_into_anchor_chain(child.id(), c_first_patient_offset);
+        child.update_parent_reference(new_parent_id, c_parent_doctor_offset);
 
         txn.commit();
     }
