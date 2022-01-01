@@ -584,7 +584,9 @@ std::string class_writer_t::generate_outgoing_links_accessors_cpp()
         {
             code += "{{CHILD_TABLE}}_ref_t {{TABLE_NAME}}_t::{{FIELD_NAME}}() const {";
             code.IncrementIdentLevel();
-            code += "return {{CHILD_TABLE}}_ref_t(gaia_id(), this->references()[{{FIRST_OFFSET}}], {{FIRST_OFFSET}});";
+            code += "gaia::common::gaia_id_t anchor_id = this->references()[{{FIRST_OFFSET}}];";
+            code += "gaia::common::gaia_id_t child_id = (anchor_id == gaia::common::c_invalid_gaia_id) ? gaia::common::c_invalid_gaia_id : dac_db_t::get_reference(anchor_id, gaia::common::c_ref_anchor_first_child_offset);";
+            code += "return {{CHILD_TABLE}}_ref_t(gaia_id(), child_id, {{FIRST_OFFSET}});";
             code.DecrementIdentLevel();
             code += "}";
         }

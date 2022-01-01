@@ -228,135 +228,6 @@ bool dac_set_iterator_t<T_child>::operator!=(const dac_set_iterator_t& rhs) cons
 }
 
 //
-// Implementation for reference_chain_container_t.
-//
-template <typename T_child>
-dac_set_iterator_t<T_child> reference_chain_container_t<T_child>::begin() const
-{
-    gaia::common::gaia_id_t id = gaia::common::c_invalid_gaia_id;
-
-    if (m_parent_id != gaia::common::c_invalid_gaia_id)
-    {
-        id = dac_db_t::get_reference(m_parent_id, m_child_offset);
-        while (id != gaia::common::c_invalid_gaia_id)
-        {
-            if (m_filter_fn)
-            {
-                if (m_filter_fn(T_child::get(id)))
-                {
-                    break;
-                }
-                id = dac_db_t::get_reference(id, m_next_offset);
-            }
-            else
-            {
-                break;
-            }
-        }
-    }
-
-    return dac_set_iterator_t<T_child>(id, m_filter_fn, m_next_offset);
-}
-
-// The where() method saves the address of the std::function, to be called for each candidate return value.
-template <typename T_child>
-reference_chain_container_t<T_child>
-reference_chain_container_t<T_child>::where(std::function<bool(const T_child&)> filter_function) const
-{
-    return reference_chain_container_t<T_child>(m_parent_id, filter_function, m_child_offset, m_next_offset);
-}
-
-template <typename T_child>
-dac_set_iterator_t<T_child> reference_chain_container_t<T_child>::end() const
-{
-    return dac_set_iterator_t<T_child>(gaia::common::c_invalid_gaia_id, common::c_invalid_reference_offset);
-}
-
-template <typename T_child>
-void reference_chain_container_t<T_child>::insert(gaia::common::gaia_id_t child_id)
-{
-    // The gaia_id() will be zero if the row hasn't been inserted into the SE.
-    if (child_id == gaia::common::c_invalid_gaia_id || m_parent_id == gaia::common::c_invalid_gaia_id)
-    {
-        report_invalid_object_state(m_parent_id, child_id, T_child::gaia_typename());
-    }
-
-    dac_db_t::insert_child_reference(m_parent_id, child_id, m_child_offset);
-}
-
-template <typename T_child>
-void reference_chain_container_t<T_child>::insert(const T_child& child_edc)
-{
-    insert(child_edc.gaia_id());
-}
-
-template <typename T_child>
-bool reference_chain_container_t<T_child>::connect(gaia::common::gaia_id_t child_id)
-{
-    // The gaia_id() will be zero if the row hasn't been inserted into the SE.
-    if (child_id == gaia::common::c_invalid_gaia_id || m_parent_id == gaia::common::c_invalid_gaia_id)
-    {
-        report_invalid_object_state(m_parent_id, child_id, T_child::gaia_typename());
-    }
-
-    return dac_db_t::insert_child_reference(m_parent_id, child_id, m_child_offset);
-}
-
-template <typename T_child>
-bool reference_chain_container_t<T_child>::connect(const T_child& child_edc)
-{
-    return connect(child_edc.gaia_id());
-}
-
-template <typename T_child>
-void reference_chain_container_t<T_child>::remove(gaia::common::gaia_id_t child_id)
-{
-    dac_db_t::remove_child_reference(m_parent_id, child_id, m_child_offset);
-}
-
-template <typename T_child>
-void reference_chain_container_t<T_child>::remove(const T_child& child_edc)
-{
-    remove(child_edc.gaia_id());
-}
-
-template <typename T_child>
-bool reference_chain_container_t<T_child>::disconnect(gaia::common::gaia_id_t child_id)
-{
-    return dac_db_t::remove_child_reference(m_parent_id, child_id, m_child_offset);
-}
-
-template <typename T_child>
-bool reference_chain_container_t<T_child>::disconnect(const T_child& child_edc)
-{
-    return disconnect(child_edc.gaia_id());
-}
-
-template <typename T_child>
-dac_set_iterator_t<T_child> reference_chain_container_t<T_child>::erase(dac_set_iterator_t<T_child> position)
-{
-    auto current = *position;
-    position++;
-    remove(current);
-    return position;
-}
-
-template <typename T_child>
-void reference_chain_container_t<T_child>::clear()
-{
-    for (auto it = begin(); it != end();)
-    {
-        it = erase(it);
-    }
-}
-
-template <typename T_child>
-size_t reference_chain_container_t<T_child>::size() const
-{
-    return std::distance(begin(), end());
-}
-
-//
 // Implementation for value_linked_reference_anchor_chain_container_t.
 //
 template <typename T_child>
@@ -464,7 +335,7 @@ void reference_anchor_chain_container_t<T_child>::insert(const T_child& child)
 template <typename T_child>
 bool reference_anchor_chain_container_t<T_child>::connect(gaia::common::gaia_id_t id)
 {
-    if (id == gaia::common::c_invalid_gaia_id)
+    if (id == gaia::common::c_invalid_gaia_id || m_parent_id == gaia::common::c_invalid_gaia_id)
     {
         report_invalid_object_id(id);
     }

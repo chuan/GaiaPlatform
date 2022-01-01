@@ -613,7 +613,7 @@ void insert_object(bool committed, employee_t e1, address_t a1)
         else
         {
             // Nothing is committed yet.
-            EXPECT_THROW(e1.addresses().insert(a1), invalid_object_state);
+            EXPECT_THROW(e1.addresses().insert(a1), invalid_object_id);
         }
     }
     commit_transaction();
@@ -823,7 +823,8 @@ TEST_F(gaia_references_test, set_filter)
     size_t name_length = 5;
     int count = 0;
     auto name_length_list = e_mgr.reportees()
-                                .where([&name_length](const employee_t& e) { return strlen(e.name_first()) == name_length; });
+                                .where([&name_length](const employee_t& e)
+                                       { return strlen(e.name_first()) == name_length; });
     for (const auto& e : name_length_list)
     {
         EXPECT_EQ(strlen(e.name_first()), name_length);

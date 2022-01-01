@@ -145,28 +145,6 @@ void dac_db_t::update(gaia_id_t id, size_t data_size, const void* data)
     gaia_ptr.update_payload(data_size, data);
 }
 
-bool dac_db_t::insert_child_reference(gaia_id_t parent_id, gaia_id_t child_id, common::reference_offset_t child_slot)
-{
-    gaia_ptr_t parent = gaia_ptr_t::from_gaia_id(parent_id);
-    if (!parent)
-    {
-        throw invalid_object_id_internal(parent_id);
-    }
-
-    return parent.add_child_reference(child_id, child_slot);
-}
-
-bool dac_db_t::remove_child_reference(gaia_id_t parent_id, gaia_id_t child_id, common::reference_offset_t child_slot)
-{
-    gaia_ptr_t parent = gaia_ptr_t::from_gaia_id(parent_id);
-    if (!parent)
-    {
-        throw invalid_object_id_internal(parent_id);
-    }
-
-    return parent.remove_child_reference(child_id, child_slot);
-}
-
 bool dac_db_t::insert_into_anchor_chain(gaia_id_t parent_id, gaia_id_t id, common::reference_offset_t anchor_slot)
 {
     gaia_ptr_t parent = gaia_ptr_t::from_gaia_id(parent_id);
@@ -293,7 +271,7 @@ bool dac_base_reference_t::connect(gaia_id_t old_id, gaia::common::gaia_id_t new
         return false;
     }
     dac_base_reference_t::disconnect(old_id);
-    dac_db_t::insert_child_reference(m_parent_id, new_id, m_child_offset);
+    dac_db_t::insert_into_anchor_chain(m_parent_id, new_id, m_child_offset);
     return true;
 }
 
@@ -303,7 +281,7 @@ bool dac_base_reference_t::disconnect(gaia_id_t id)
     {
         return false;
     }
-    dac_db_t::remove_child_reference(m_parent_id, id, m_child_offset);
+    dac_db_t::remove_from_anchor_chain(m_parent_id, id, m_child_offset);
     return true;
 }
 
