@@ -100,7 +100,6 @@ namespace db
 [[nodiscard]] gaia_id_t relationship_view_t::parent_table_id() const
 {
     gaia_id_t anchor_id = m_obj_ptr->references()[c_parent_gaia_table_ref_offset];
-    // This can only happen if we have a broken relationship record in catalog.
     ASSERT_PRECONDITION(
         anchor_id != c_invalid_gaia_id,
         std::string("Unexpected invalid anchor in the relationship ") + name() + " to get the parent table.");
@@ -111,7 +110,6 @@ namespace db
 [[nodiscard]] gaia_id_t relationship_view_t::child_table_id() const
 {
     gaia_id_t anchor_id = m_obj_ptr->references()[c_child_gaia_table_ref_offset];
-    // This can only happen if we have a broken relationship record in catalog.
     ASSERT_PRECONDITION(
         anchor_id != c_invalid_gaia_id,
         std::string("Unexpected invalid anchor in the relationship ") + name() + "to get the child table.");
@@ -161,7 +159,12 @@ namespace db
 
 [[nodiscard]] gaia_id_t index_view_t::table_id() const
 {
-    return m_obj_ptr->references()[c_parent_table_ref_offset];
+    gaia_id_t anchor_id = m_obj_ptr->references()[c_parent_table_ref_offset];
+    ASSERT_PRECONDITION(
+        anchor_id != c_invalid_gaia_id,
+        std::string("Unexpected invalid anchor in the index ") + name() + " to get the table.");
+    auto anchor_ptr = id_to_ptr(anchor_id);
+    return anchor_ptr->references()[c_ref_anchor_parent_offset];
 }
 
 table_view_t catalog_core_t::get_table(gaia_id_t table_id)

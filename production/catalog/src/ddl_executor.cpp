@@ -247,6 +247,12 @@ void ddl_executor_t::bootstrap_catalog()
             std::nullopt,
             false);
     }
+    {
+        field_def_list_t fields;
+        create_table_impl(
+            "catalog", "gaia_ref_anchor", fields, is_system, throw_on_exists, auto_drop,
+            static_cast<gaia_type_t::value_type>(catalog_table_type_t::gaia_ref_anchor));
+    }
 
     create_database(c_event_log_db_name, false);
     {

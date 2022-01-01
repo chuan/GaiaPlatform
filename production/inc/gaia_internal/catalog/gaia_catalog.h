@@ -19,6 +19,9 @@ namespace catalog {
 // The initial size of the flatbuffer builder buffer.
 constexpr int c_flatbuffer_builder_size = 128;
 
+// Constants contained in the gaia_ref_anchor object.
+constexpr uint32_t c_gaia_type_gaia_ref_anchor = 4294967288u;
+
 // Constants contained in the gaia_index object.
 constexpr uint32_t c_gaia_type_gaia_index = 4294967289u;
 constexpr common::reference_offset_t c_gaia_index_parent_table = 0;
@@ -65,6 +68,7 @@ constexpr uint32_t c_gaia_type_gaia_database = 4294967291u;
 constexpr common::reference_offset_t c_gaia_database_first_gaia_tables = 0;
 
 
+class gaia_ref_anchor_t;
 class gaia_index_t;
 class gaia_rule_t;
 class gaia_ruleset_t;
@@ -72,6 +76,31 @@ class gaia_relationship_t;
 class gaia_field_t;
 class gaia_table_t;
 class gaia_database_t;
+
+
+typedef gaia::direct_access::dac_writer_t<c_gaia_type_gaia_ref_anchor, gaia_ref_anchor_t, internal::gaia_ref_anchor, internal::gaia_ref_anchorT> gaia_ref_anchor_writer;
+class gaia_ref_anchor_t : public gaia::direct_access::dac_object_t<c_gaia_type_gaia_ref_anchor, gaia_ref_anchor_t, internal::gaia_ref_anchor, internal::gaia_ref_anchorT> {
+    friend class dac_object_t<c_gaia_type_gaia_ref_anchor, gaia_ref_anchor_t, internal::gaia_ref_anchor, internal::gaia_ref_anchorT>;
+public:
+    gaia_ref_anchor_t() : dac_object_t() {}
+    static const char* gaia_typename();
+    static gaia::common::gaia_id_t insert_row();
+    static gaia::direct_access::dac_container_t<c_gaia_type_gaia_ref_anchor, gaia_ref_anchor_t> list();
+
+    template<class unused_t>
+    struct expr_ {
+        static gaia::direct_access::expression_t<gaia_ref_anchor_t, gaia::common::gaia_id_t> gaia_id;
+    };
+    using expr = expr_<void>;
+private:
+    explicit gaia_ref_anchor_t(gaia::common::gaia_id_t id) : dac_object_t(id) {}
+};
+
+namespace gaia_ref_anchor_expr {
+    static auto& gaia_id = gaia_ref_anchor_t::expr::gaia_id;
+} // gaia_ref_anchor_expr
+
+template<class unused_t> gaia::direct_access::expression_t<gaia_ref_anchor_t, gaia::common::gaia_id_t> gaia_ref_anchor_t::expr_<unused_t>::gaia_id{&gaia_ref_anchor_t::gaia_id};
 
 
 typedef gaia::direct_access::dac_writer_t<c_gaia_type_gaia_index, gaia_index_t, internal::gaia_index, internal::gaia_indexT> gaia_index_writer;

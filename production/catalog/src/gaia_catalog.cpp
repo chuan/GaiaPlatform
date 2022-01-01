@@ -12,6 +12,22 @@ namespace gaia {
 namespace catalog {
 
 //
+// Implementation of class gaia_ref_anchor_t.
+//
+
+const char* gaia_ref_anchor_t::gaia_typename() {
+    static const char* gaia_typename = "gaia_ref_anchor_t";
+    return gaia_typename;
+}
+gaia::common::gaia_id_t gaia_ref_anchor_t::insert_row() {
+    flatbuffers::FlatBufferBuilder b(c_flatbuffer_builder_size);
+    b.Finish(internal::Creategaia_ref_anchor(b));
+    return dac_object_t::insert_row(b);
+}
+gaia::direct_access::dac_container_t<c_gaia_type_gaia_ref_anchor, gaia_ref_anchor_t> gaia_ref_anchor_t::list() {
+    return gaia::direct_access::dac_container_t<c_gaia_type_gaia_ref_anchor, gaia_ref_anchor_t>();
+}
+//
 // Implementation of class gaia_index_t.
 //
 
